@@ -6038,6 +6038,7 @@ namespace Nop.Services.Installation
                 IncludeShortDescriptionInCompareProducts = false,
                 IncludeFullDescriptionInCompareProducts = false,
                 IncludeFeaturedProductsInNormalLists = false,
+                UseLinksInRequiredProductWarnings = true,
                 DisplayTierPricesWithDiscounts = true,
                 IgnoreDiscounts = false,
                 IgnoreFeaturedProducts = false,

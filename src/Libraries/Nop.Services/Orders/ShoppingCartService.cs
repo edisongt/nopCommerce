@@ -41,6 +41,7 @@ namespace Nop.Services.Orders
         private readonly ICheckoutAttributeParser _checkoutAttributeParser;
         private readonly IPriceFormatter _priceFormatter;
         private readonly ICustomerService _customerService;
+        private readonly CatalogSettings _catalogSettings;
         private readonly OrderSettings _orderSettings;
         private readonly ShoppingCartSettings _shoppingCartSettings;
         private readonly IEventPublisher _eventPublisher;
@@ -72,6 +73,7 @@ namespace Nop.Services.Orders
         /// <param name="checkoutAttributeParser">Checkout attribute parser</param>
         /// <param name="priceFormatter">Price formatter</param>
         /// <param name="customerService">Customer service</param>
+        /// <param name="catalogSettings">Catalog settings</param>
         /// <param name="orderSettings">Order settings</param>
         /// <param name="shoppingCartSettings">Shopping cart settings</param>
         /// <param name="eventPublisher">Event publisher</param>
@@ -95,6 +97,7 @@ namespace Nop.Services.Orders
             ICheckoutAttributeParser checkoutAttributeParser,
             IPriceFormatter priceFormatter,
             ICustomerService customerService,
+            CatalogSettings catalogSettings,
             OrderSettings orderSettings,
             ShoppingCartSettings shoppingCartSettings,
             IEventPublisher eventPublisher,
@@ -119,6 +122,7 @@ namespace Nop.Services.Orders
             this._checkoutAttributeParser = checkoutAttributeParser;
             this._priceFormatter = priceFormatter;
             this._customerService = customerService;
+            this._catalogSettings = catalogSettings;
             this._orderSettings = orderSettings;
             this._shoppingCartSettings = shoppingCartSettings;
             this._eventPublisher = eventPublisher;
@@ -236,7 +240,10 @@ namespace Nop.Services.Orders
                     if (rp != null)
                         requiredProducts.Add(rp);
                 }
-                
+
+                //get URL helper
+                var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
                 foreach (var rp in requiredProducts)
                 {
                     //ensure that product is in the cart
@@ -252,10 +259,11 @@ namespace Nop.Services.Orders
                     //not in the cart
                     if (!alreadyInTheCart)
                     {
-                        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-                        var requiredProductUrl = urlHelper.RouteUrl("Product", new { SeName = rp.GetSeName() });
-                        var requiredProductLink = $"<a href=\"{requiredProductUrl}\">{rp.GetLocalized(x => x.Name)}</a>";
-                        var requiredProductWarning = string.Format(_localizationService.GetResource("ShoppingCart.RequiredProductWarning"), requiredProductLink);
+                        var requiredProductName = rp.GetLocalized(x => x.Name);
+                        var requiredProductLink = $"<a href=\"{(urlHelper.RouteUrl("Product", new { SeName = rp.GetSeName()}))}\">{requiredProductName}</a>";
+                        var requiredProductWarning = _catalogSettings.UseLinksInRequiredProductWarnings ?
+                            string.Format(_localizationService.GetResource("ShoppingCart.RequiredProductWarning"), requiredProductLink) :
+                            string.Format(_localizationService.GetResource("ShoppingCart.RequiredProductWarning"), requiredProductName);
                         if (product.AutomaticallyAddRequiredProducts)
                         {
                             //add to cart (if possible)
